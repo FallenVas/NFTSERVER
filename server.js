@@ -143,7 +143,7 @@ app.post("/register", async (req, res) => {
         from: 'cuternft@gmail.com',
         to: email,
         subject: 'Welcome to cuterNFT',
-        text: `  <div style="padding: 0 30%">
+        html: `  <div style="padding: 0 30%">
         <h1
           style="
             text-align: center;
@@ -173,7 +173,7 @@ app.post("/register", async (req, res) => {
         </p>
       </div>`
       };
-       transporter.sendMail(mailOptions, function(error, info){
+      transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
           console.log(error);
         } else {
@@ -203,18 +203,18 @@ app.get("/getRegistered", async (req, res) => {
 app.post('/approve', async (req, res) => {
   const { address } = req.body;
   console.log(address)
-  try{
-    const member = await registered.findOne({address})
-    if(!member.approved){
+  try {
+    const member = await registered.findOne({ address })
+    if (!member.approved) {
       member.approved = true;
       await member.save();
       res.json({
         message: 'success'
       })
     }
-  }catch(err){
+  } catch (err) {
     res.json({
-      message:'error'
+      message: 'error'
     })
   }
 })
