@@ -11,6 +11,8 @@ import dotenv from "dotenv";
 import axios from "axios";
 import mongoose from "mongoose";
 import registered from "./models/whitelisted.js";
+import nodemailer from 'nodemailer'
+
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -26,6 +28,14 @@ try {
   console.log(e);
   console.log("could not connect");
 }
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'cuternft@gmail.com',
+    pass: process.env.GMAIL_PASSWORD
+  }
+});
+
 app.post("/airdrop", async (req, res) => {
   const { address } = req.body;
   if (
@@ -121,8 +131,55 @@ app.post("/register", async (req, res) => {
         message: "already",
       });
     } else {
-      const newMember = new registered({ email, address, image, username , approved:false });
+      const newMember = new registered({
+        email,
+        address,
+        image,
+        username,
+        approved: false,
+      });
       await newMember.save();
+      const mailOptions = {
+        from: 'cuternft@gmail.com',
+        to: email,
+        subject: 'Welcome to cuterNFT',
+        text: `  <div style="padding: 0 30%">
+        <h1
+          style="
+            text-align: center;
+            font-size: xx-large;
+            font-weight: bold;
+            margin: 3rem 0;
+          "
+        >
+          CUTER NFT
+        </h1>
+        <h2 style=" text-align: center; font-size: x-large;">
+          You're registered!
+        </h2>
+        <img
+          style="margin: 2rem 0 0 0; width: 100%"
+          src="https://cdn.discordapp.com/attachments/914595838578282547/1003708982235496638/photo_5994719209646569530_y.png"
+        />
+        <p style="margin: 0.4rem 0">
+          This email confirms that<b><i> ${address}</i></b>
+          successfully registered for CUTER NFT whitelist (CUTELIST) raffle.
+        </p>
+        <p tyle="margin:0.4rem 0">
+          For more info, visit the CUTER NFT page:
+          <a href="https://www.cuternft.com/raffle"
+            >https://www.cuternft.com/raffle</a
+          >
+        </p>
+      </div>`
+      };
+       transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
       res.json({
         message: "success",
       });
@@ -134,24 +191,45 @@ app.post("/register", async (req, res) => {
     });
   }
 });
+
 app.get("/getRegistered", async (req, res) => {
   try {
     const members = await registered.find({});
-    res;
-  } catch (error) {}
-});
-app.get('/deleteall', async (req, res) => {
-  try {
-    await registered.deleteMany({});
-    res.json({
-      message: 'success'
-    })
+    res.json({ members });
   } catch (error) {
+    res.json("error");
+  }
+});
+app.post('/approve', async (req, res) => {
+  const { address } = req.body;
+  console.log(address)
+  try{
+    const member = await registered.findOne({address})
+    if(!member.approved){
+      member.approved = true;
+      await member.save();
+      res.json({
+        message: 'success'
+      })
+    }
+  }catch(err){
     res.json({
-      message: 'error'
+      message:'error'
     })
   }
 })
+app.get("/deleteall", async (req, res) => {
+  try {
+    await registered.deleteMany({});
+    res.json({
+      message: "success",
+    });
+  } catch (error) {
+    res.json({
+      message: "error",
+    });
+  }
+});
 app.listen("5000", () => {
   console.log("listening on port 5000");
 });
