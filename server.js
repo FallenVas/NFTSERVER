@@ -146,7 +146,7 @@ app.post("/register", async (req, res) => {
         from: "cuternft@gmail.com",
         to: email,
         subject: "Welcome to cuterNFT",
-        text: `  <div style="padding: 0 30%">
+        html: `  <div style="padding: 0 30%">
         <h1
           style="
             text-align: center;
@@ -166,7 +166,7 @@ app.post("/register", async (req, res) => {
         />
         <p style="margin: 0.4rem 0">
           This email confirms that<b><i> ${address}</i></b>
-          successfully registered for CUTER NFT whitelist (CUTELIST) raffle.
+          successfully registered for CUTER NFT whitelist (CUTELIST) raffle.You will be informed once you win the CuteList spot.
         </p>
         <p tyle="margin:0.4rem 0">
           For more info, visit the CUTER NFT page:
