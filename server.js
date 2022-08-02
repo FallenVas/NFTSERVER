@@ -24,7 +24,7 @@ try {
     { useNewUrlParser: true, useUnifiedTopology: true },
     () => {
       console.log("Mongoose is connected");
-      addMembers();
+      //addMembers();
     }
   );
 } catch (e) {
