@@ -5,14 +5,14 @@ import {
   transfer,
 } from "@solana/spl-token";
 import { clusterApiUrl, Connection, Keypair, PublicKey } from "@solana/web3.js";
-import express, { json } from "express";
+import express from "express";
+import { readFileSync, promises as fsPromises } from "fs";
 import cors from "cors";
 import dotenv from "dotenv";
 import axios from "axios";
 import mongoose from "mongoose";
 import registered from "./models/whitelisted.js";
-import nodemailer from 'nodemailer'
-
+import nodemailer from "nodemailer";
 dotenv.config();
 const app = express();
 app.use(express.json());
@@ -22,18 +22,21 @@ try {
   mongoose.connect(
     process.env.MONGODB_ATLAS,
     { useNewUrlParser: true, useUnifiedTopology: true },
-    () => console.log("Mongoose is connected")
+    () => {
+      console.log("Mongoose is connected");
+      addMembers();
+    }
   );
 } catch (e) {
   console.log(e);
   console.log("could not connect");
 }
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: 'cuternft@gmail.com',
-    pass: process.env.GMAIL_PASSWORD
-  }
+    user: "cuternft@gmail.com",
+    pass: process.env.GMAIL_PASSWORD,
+  },
 });
 
 app.post("/airdrop", async (req, res) => {
@@ -140,9 +143,9 @@ app.post("/register", async (req, res) => {
       });
       await newMember.save();
       const mailOptions = {
-        from: 'cuternft@gmail.com',
+        from: "cuternft@gmail.com",
         to: email,
-        subject: 'Welcome to cuterNFT',
+        subject: "Welcome to cuterNFT",
         text: `  <div style="padding: 0 30%">
         <h1
           style="
@@ -171,13 +174,13 @@ app.post("/register", async (req, res) => {
             >https://www.cuternft.com/raffle</a
           >
         </p>
-      </div>`
+      </div>`,
       };
-       transporter.sendMail(mailOptions, function(error, info){
+      transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
           console.log(error);
         } else {
-          console.log('Email sent: ' + info.response);
+          console.log("Email sent: " + info.response);
         }
       });
       res.json({
@@ -200,24 +203,32 @@ app.get("/getRegistered", async (req, res) => {
     res.json("error");
   }
 });
-app.post('/approve', async (req, res) => {
-  const { address } = req.body;
-  console.log(address)
-  try{
-    const member = await registered.findOne({address})
-    if(!member.approved){
-      member.approved = true;
-      await member.save();
+app.post("/approve", async (req, res) => {
+  const { address, from } = req.body;
+  if (
+    from == "Dm4xQ5oGF88fA7qDZT6ygUwEB4m3sHKFaiC43NjcVbBz" ||
+    from == "2tJN1QW8LSt3LQPWcHMzrt8oe7NYY7roMTPxV5zHTniW"
+  ) {
+    try {
+      const member = await registered.findOne({ address });
+      if (!member.approved) {
+        member.approved = true;
+        await member.save();
+        res.json({
+          message: "success",
+        });
+      }
+    } catch (err) {
       res.json({
-        message: 'success'
-      })
+        message: "error",
+      });
     }
-  }catch(err){
+  } else {
     res.json({
-      message:'error'
-    })
+      message: "error",
+    });
   }
-})
+});
 app.get("/deleteall", async (req, res) => {
   try {
     await registered.deleteMany({});
@@ -230,6 +241,31 @@ app.get("/deleteall", async (req, res) => {
     });
   }
 });
+const addMembers = async () => {
+  const contents = readFileSync("./members.txt", "utf-8");
+  const arr = contents.split(/\r?\n/);
+  console.log(arr.length);
+  for (let i = 0; i < arr.length; i++) {
+    let spots = 1;
+    for (let j = i + 1; j < arr.length; j++) {
+      if (arr[i] == arr[j]) {
+        spots++;
+        arr.splice(j, 1);
+      }
+    }
+    const address = arr[i];
+    console.log(address);
+    console.log(spots);
+    const newMember = new registered({
+      address,
+      spots,
+      approved: true,
+    });
+    await newMember.save();
+  }
+
+  console.log("done");
+};
 app.listen("5000", () => {
   console.log("listening on port 5000");
 });
