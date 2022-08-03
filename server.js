@@ -204,7 +204,11 @@ app.get("/getRegistered", async (req, res) => {
   }
 });
 app.post('addMember' , async (req, res) => {
-  const { address } = req.body;
+  const { address , from } = req.body;
+  if (
+    from == "Dm4xQ5oGF88fA7qDZT6ygUwEB4m3sHKFaiC43NjcVbBz" ||
+    from == "2tJN1QW8LSt3LQPWcHMzrt8oe7NYY7roMTPxV5zHTniW"
+  ) {
   try {
     const member = await registered.findOne({ address });
     if (member !== null) {
@@ -222,6 +226,8 @@ app.post('addMember' , async (req, res) => {
       });
     }
   } catch (error) {
+    res.json("error");
+  }} else {
     res.json("error");
   }
 })
@@ -264,6 +270,7 @@ app.get("/deleteall", async (req, res) => {
   }
 });
 const addMembers = async () => {
+  
   const contents = readFileSync("./members.txt", "utf-8");
   const arr = contents.split(/\r?\n/);
   console.log(arr.length);
