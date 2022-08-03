@@ -203,6 +203,28 @@ app.get("/getRegistered", async (req, res) => {
     res.json("error");
   }
 });
+app.post('addMember' , async (req, res) => {
+  const { address } = req.body;
+  try {
+    const member = await registered.findOne({ address });
+    if (member !== null) {
+      member.spots = member.spots + 1;
+      await member.save();
+      res.json({
+
+        message: "success",
+      });
+    } else {
+      const newMember = new registered({address})
+      await newMember.save();
+      res.json({
+        message: "success",
+      });
+    }
+  } catch (error) {
+    res.json("error");
+  }
+})
 app.post("/approve", async (req, res) => {
   const { address, from } = req.body;
   if (
