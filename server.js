@@ -17,6 +17,7 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
+const port = process.env.PORT || 5000;
 try {
   // Connect to the MongoDB cluster
   mongoose.connect(
@@ -364,6 +365,6 @@ const addMembers = async () => {
 
   console.log("done");
 };
-app.listen("5000", () => {
+app.listen(port, () => {
   console.log("listening on port 5000");
 });
