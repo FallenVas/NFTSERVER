@@ -6,6 +6,7 @@ const registered = new Schema({
     image:String,
     username:String,
     spots:Number,
+    whitelisted:Boolean,
     approved:Boolean
 })
 export default mongoose.model('Registered', registered);

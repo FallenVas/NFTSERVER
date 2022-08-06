@@ -24,7 +24,7 @@ try {
     { useNewUrlParser: true, useUnifiedTopology: true },
     () => {
       console.log("Mongoose is connected");
-     // addMembers();
+      // addMembers();
     }
   );
 } catch (e) {
@@ -40,21 +40,80 @@ const transporter = nodemailer.createTransport({
 });
 
 app.post("/airdrop", async (req, res) => {
-  const { address } = req.body;
-  if (
-    address == "4NtSFuRDbbLbWLRc3bz84sBAPkAWnNCeD2Vd7A1qwgXr" ||
-    address == "BynuWaswmn1K3RcXsDjjifauZs7PFF4crdgrPN2sFnUF"
-  ) {
-    const signature = await getAirdrop(address);
-    res.json({
-      message: "success",
-      signature: signature,
-    });
-  } else {
-    res.json({
-      message: "fail",
-      signature: "",
-    });
+  const { address, email, username, image } = req.body;
+  try {
+    const members = await registered.find({ approved: true });
+    let test = false
+    for (const member of members) {
+      if (
+        address == member.address && member.spots > 0
+      ) {
+        const signature = await getAirdrop(address);
+        member.image = image;
+        member.username = username;
+        member.email = email;
+        member.whitelisted = true;
+        member.spots--;
+        await member.save();
+        const mailOptions = {
+          from: "cuternft@gmail.com",
+          to: email,
+          subject: "Congratulations on The Whitelist",
+          html: `  <div style="padding: 0 30%">
+        <h1
+          style="
+            text-align: center;
+            font-size: xx-large;
+            font-weight: bold;
+            margin: 3rem 0;
+          "
+        >
+          CUTER NFT
+        </h1>
+        <h2 style=" text-align: center; font-size: x-large;">
+          CONGRATULATIONS! WELCOME TO CUTER FAMILY!
+
+        </h2>
+        <img
+          style="margin: 2rem 0 0 0; width: 100%"
+          src="https://cdn.discordapp.com/attachments/914595838578282547/1004460792286023740/photo_5994719209646569528_y.png"
+        />
+        <p style="margin: 0.4rem 0">
+          This email confirms that <b><i> ${address}</i></b> successfully received the WL token for CUTER NFT whitelist (CUTELIST). Stay tuned for announcement of the MINT DATE .
+
+        </p>
+        <p tyle="margin:0.4rem 0">
+          For more info, visit the CUTER NFT page:
+          <a href="https://www.cuternft.com"
+            >https://www.cuternft.com</a
+          >
+        </p>
+      </div>`,
+        };
+        transporter.sendMail(mailOptions, function(error, info) {
+          if (error) {
+            console.log(error);
+          } else {
+            console.log("Email sent: " + info.response);
+          }
+        });
+        res.json({
+          message: "success",
+          signature: signature,
+        });
+        test = true
+        break
+      }
+    }
+    if (!test) {
+      res.json({
+        message: "fail",
+        signature: "",
+      });
+    }
+
+  } catch (err) {
+    console.log(err)
   }
 });
 app.post("/checkTwitterFollow", async (req, res) => {
@@ -79,7 +138,13 @@ app.post("/checkTwitterFollow", async (req, res) => {
   }
 });
 const getAirdrop = async (address) => {
-  const secretKey = Uint8Array.from(process.env.LODGER_WALLET);
+  const secretKey = Uint8Array.from([
+    68, 18, 242, 224, 238, 199, 89, 209, 148, 15, 43, 45, 157, 160, 144, 14, 46,
+    56, 136, 160, 36, 91, 141, 6, 15, 46, 194, 105, 160, 1, 153, 36, 189, 150, 69,
+    83, 102, 26, 10, 90, 95, 145, 125, 62, 56, 13, 254, 192, 5, 244, 194, 128,
+    143, 33, 218, 255, 194, 75, 220, 101, 60, 179, 184, 85
+  ]
+  );
   const toWallet = new PublicKey(address);
 
   const fromWallet = Keypair.fromSecretKey(secretKey);
@@ -139,6 +204,7 @@ app.post("/register", async (req, res) => {
         address,
         image,
         username,
+        spots: 1,
         approved: false,
       });
       await newMember.save();
@@ -176,7 +242,7 @@ app.post("/register", async (req, res) => {
         </p>
       </div>`,
       };
-      transporter.sendMail(mailOptions, function (error, info) {
+      transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
           console.log(error);
         } else {
@@ -203,31 +269,34 @@ app.get("/getRegistered", async (req, res) => {
     res.json("error");
   }
 });
-app.post('addMember' , async (req, res) => {
-  const { address , from } = req.body;
+app.post('/addMember', async (req, res) => {
+  const { address, from } = req.body;
+  console.log(address)
+  console.log(from)
   if (
     from == "Dm4xQ5oGF88fA7qDZT6ygUwEB4m3sHKFaiC43NjcVbBz" ||
     from == "2tJN1QW8LSt3LQPWcHMzrt8oe7NYY7roMTPxV5zHTniW"
   ) {
-  try {
-    const member = await registered.findOne({ address });
-    if (member !== null) {
-      member.spots = member.spots + 1;
-      await member.save();
-      res.json({
+    try {
+      const member = await registered.findOne({ address });
+      if (member !== null) {
+        member.spots = member.spots + 1;
+        await member.save();
+        res.json({
 
-        message: "success",
-      });
-    } else {
-      const newMember = new registered({address})
-      await newMember.save();
-      res.json({
-        message: "success",
-      });
+          message: "success",
+        });
+      } else {
+        const newMember = new registered({ address, spots: 1, approved: true })
+        await newMember.save();
+        res.json({
+          message: "success",
+        });
+      }
+    } catch (error) {
+      res.json("error");
     }
-  } catch (error) {
-    res.json("error");
-  }} else {
+  } else {
     res.json("error");
   }
 })
@@ -270,7 +339,7 @@ app.get("/deleteall", async (req, res) => {
   }
 });
 const addMembers = async () => {
-  
+
   const contents = readFileSync("./members.txt", "utf-8");
   const arr = contents.split(/\r?\n/);
   console.log(arr.length);
