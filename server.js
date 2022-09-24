@@ -207,6 +207,7 @@ app.post("/register", async (req, res) => {
         username,
         spots: 1,
         approved: false,
+        isLegendary:false
       });
       await newMember.save();
       const mailOptions = {
@@ -311,6 +312,58 @@ app.post("/approve", async (req, res) => {
       const member = await registered.findOne({ address });
       if (!member.approved) {
         member.approved = true;
+        await member.save();
+        res.json({
+          message: "success",
+        });
+      }
+    } catch (err) {
+      res.json({
+        message: "error",
+      });
+    }
+  } else {
+    res.json({
+      message: "error",
+    });
+  }
+});
+app.post("/approveLegendary", async (req, res) => {
+  const { address, from } = req.body;
+  if (
+    from == "Dm4xQ5oGF88fA7qDZT6ygUwEB4m3sHKFaiC43NjcVbBz" ||
+    from == "2tJN1QW8LSt3LQPWcHMzrt8oe7NYY7roMTPxV5zHTniW"
+  ) {
+    try {
+      const member = await registered.findOne({ address });
+      if (!member.isLegendary) {
+        member.isLegendary = true;
+        await member.save();
+        res.json({
+          message: "success",
+        });
+      }
+    } catch (err) {
+      res.json({
+        message: "error",
+      });
+    }
+  } else {
+    res.json({
+      message: "error",
+    });
+  }
+});
+app.post("/removeLegendary", async (req, res) => {
+  const { address, from } = req.body;
+  if (
+    from == "Dm4xQ5oGF88fA7qDZT6ygUwEB4m3sHKFaiC43NjcVbBz" ||
+    from == "2tJN1QW8LSt3LQPWcHMzrt8oe7NYY7roMTPxV5zHTniW"
+  ) {
+    try {
+      const member = await registered.findOne({ address });
+      if (member.isLegendary) {
+        member.isLegendary = false;
         await member.save();
         res.json({
           message: "success",

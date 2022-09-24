@@ -7,6 +7,7 @@ const registered = new Schema({
     username:String,
     spots:Number,
     whitelisted:Boolean,
-    approved:Boolean
+    approved:Boolean,
+    isLegendary:Boolean
 })
 export default mongoose.model('Registered', registered);
